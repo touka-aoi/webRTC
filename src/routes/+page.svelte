@@ -22,8 +22,12 @@
   let localVideo:  HTMLVideoElement;
   let remoteVideo:  HTMLVideoElement;
 
+  let remotemediaTrack: MediaStreamTrack;
+
   $: videoWidth = 0;
   $: videoHeight = 0;
+  $: remoteVideoWidth = 0;
+  $: remoteVideoHeight = 0;
   
   onMount(() => {
     trace("trece on: ");
@@ -87,6 +91,7 @@
   function getMediaTracksSetting(mediaTrack: MediaStreamTrack)
   {
     const currentSetting = mediaTrack.getSettings();
+    console.log(currentSetting);
     videoHeight = currentSetting.height as number;
     videoWidth = currentSetting.width as number;
   }
@@ -197,16 +202,22 @@
   }
 
   function gotRemoteMediaStream(event: RTCTrackEvent) {
-    const mediaTrack: MediaStreamTrack = event.track as MediaStreamTrack;
+    remotemediaTrack = event.track as MediaStreamTrack;
     remoteStream = new MediaStream();
-    if(remoteVideo)
-    {
-      remoteVideo.srcObject = remoteStream;
-      remoteStream.addTrack(mediaTrack)
-    }
+    remoteVideo.srcObject = remoteStream;
+    remoteStream.addTrack(remotemediaTrack)
     trace('Remote peer connection received remote stream.');
   }
 
+  function getRemoteVideoSetting()
+  {
+    if (remotemediaTrack == undefined) return
+    const remoteVideoSetting = remotemediaTrack.getSettings();
+    remoteVideoHeight = remoteVideoSetting.height as number;
+    remoteVideoWidth = remoteVideoSetting.width as number;
+  }
+
+  setInterval(getRemoteVideoSetting, 1000);
 
 
   // 逆のpeerConnectionを返す
@@ -316,6 +327,7 @@
 
 <p>Video size {videoWidth} x {videoHeight}</p>
 <video id="localVideo" autoplay playsinline></video>
+<p>Remote Video size {remoteVideoWidth} x {remoteVideoHeight}</p>
 <video id="remoteVideo" autoplay playsinline></video>
 
 <div>
