@@ -311,11 +311,11 @@
 <div class = "flex gap-2">
   <div>
     <p>Video size {videoWidth} x {videoHeight}</p>
-    <video id="localVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay playsinline class="bg-slate-300" style="width: 640px; height: 360px"></video>
   </div>  
   <div>
     <p>Remote Video size {remoteVideoWidth} x {remoteVideoHeight}</p>
-    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline class="bg-slate-300" style="width: 640px; height: 360px"></video>
   </div>
 </div>
 
