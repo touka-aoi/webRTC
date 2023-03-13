@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply px-8 py-3 text-white  rounded focus:outline-none bg-blue-600 disabled:bg-blue-300
+  }
+
+}

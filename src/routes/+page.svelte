@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "../app.css"
   import { onMount } from 'svelte';
 
   // global 
@@ -45,24 +46,6 @@
 
     localVideo =  document.getElementById("localVideo") as HTMLVideoElement;
     remoteVideo =  document.getElementById("remoteVideo") as HTMLVideoElement;
-
-    // webRTC
-    // localPeerConnection = new RTCPeerConnection();
-    // localPeerConnection.addEventListener("icecandidate", handleConnection);
-    // localPeerConnection.addEventListener("connectionstatechange", handleConnectionChange);
-    
-    // remotePeerConnection = new RTCPeerConnection();
-
-    // videoドライバーの取得
-    // navigator.mediaDevices.getUserMedia(mediaStreamConstraints)
-    // .then(gotLocalMediaStream).catch(handleLocalMediaStreamError);
-
-    // トラックの追加
-    //localPeerConnection.addTrack(videoTrack);
-
-    // オファーの作成
-    //trace('localPeerConnection createOffer start.');
-    //localPeerConnection.createOffer(offerOptions).then(createdOffer).catch(setSessionDescriptionError);
     
   });
 
@@ -325,16 +308,22 @@
 
 <h1>Realtime communication with WebRTC</h1>
 
-<p>Video size {videoWidth} x {videoHeight}</p>
-<video id="localVideo" autoplay playsinline></video>
-<p>Remote Video size {remoteVideoWidth} x {remoteVideoHeight}</p>
-<video id="remoteVideo" autoplay playsinline></video>
+<div class = "flex gap-2">
+  <div>
+    <p>Video size {videoWidth} x {videoHeight}</p>
+    <video id="localVideo" autoplay playsinline></video>
+  </div>  
+  <div>
+    <p>Remote Video size {remoteVideoWidth} x {remoteVideoHeight}</p>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+</div>
 
 <div>
-  <button id="startButton" on:click={startAction}>Start</button>  
-  <button id="stopButton" on:click={stopAction}>Stop</button>  
-  <button id="callButton" on:click={callAction}>Call</button>  
-  <button id="hangupButton" on:click={hangupAction}>Hang Up</button>  
+  <button id="startButton" class="btn" on:click={startAction}>Start</button>  
+  <button id="stopButton" class="btn" on:click={stopAction}>Stop</button>  
+  <button id="callButton" class="btn" on:click={callAction}>Call</button>  
+  <button id="hangupButton" class="btn" on:click={hangupAction}>Hang Up</button>  
 </div>
 
 
