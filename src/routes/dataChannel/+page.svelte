@@ -1,7 +1,6 @@
 <script lang="ts">
   import "$src/app.css"
   import { onMount } from 'svelte';
-	import { set_current_component } from "svelte/internal";
 
   // WebRTC
   let localPeerConnection: RTCPeerConnection;
@@ -34,7 +33,8 @@
     dataChannelSend =  document.getElementById("dataChannelSend") as HTMLTextAreaElement ;
 
     startButton.onclick = createConnection;
-    
+    sendButton.onclick = sendData;
+    closeButton.onclick = closeDataChannels;
   });
 
   function buttonStatusInit()
@@ -42,6 +42,14 @@
     startButton.disabled = false;
     sendButton.disabled = true;
     closeButton.disabled = true;
+  }
+
+  function textAreaInit()
+  {
+    dataChannelReceive.value = "";
+    dataChannelSend.value = "";
+    dataChannelSend.placeholder = "Press Start, enter some text, then press Send.";
+    dataChannelSend.disabled = true;
   }
 
   function createConnection()
@@ -175,6 +183,21 @@
     trace('Failed to add Ice Candidate: ' + error.toString());
   }
 
+  function sendData()
+  {
+    const value = dataChannelSend.value;
+    sendChannel.send(value);
+  }
+
+  function closeDataChannels()
+  {
+    sendChannel.close();
+    receiveChannel.close();
+    localPeerConnection.close();
+    remotePeerConnection.close();
+    buttonStatusInit();
+    textAreaInit();
+  }
 
   // tools
   function trace(text: String) {
@@ -184,11 +207,6 @@
     console.log(now, text);
   }
 
-  function terminated() {
-    localPeerConnection.close();
-    remotePeerConnection.close();
-    buttonStatusInit();
-  }
 
 </script>
 
