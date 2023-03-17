@@ -24,7 +24,8 @@ export default function injectSocketIO(server: httpServer)
 
     // システムメッセージ受信
     socket.on("message", (message) => {
-      socket.emit("message", message);
+      console.log(message);
+      io.emit("message", message);
     });
 
     // room作成

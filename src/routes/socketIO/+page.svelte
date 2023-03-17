@@ -19,7 +19,7 @@
   let roomValue: string;
   let messageList: any;
 
-  let PeerConnection: RTCPeerConnection;
+  let PeerConnection: RTCPeerConnection | null;
   
 
   // htmlContent
@@ -72,13 +72,34 @@
 
     // システムメッセ―ジを受信する
     socket.on("message", (message) => {
-      console.log('Client received message:', message);
+      console.log('["CLIENT LOG] Client received message:', message);
       if (message === "got user media")
       {
         maybeStart();
       } else if (message.type === "offer") {
-
-      } 
+        console.log('["CLIENT LOG] Get Offer');
+        // ホストでない かつ 通信を行っていない
+        if (!isInitiator && !isStarted)
+        {
+          console.log("[ANOTHER PEER LOG] Create peer connection");
+          // Trackの準備を行う
+          maybeStart();
+        }
+        PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+        doAnswer();
+      } else if (message.type === 'answer' && isStarted) {
+        console.log('["CLIENT LOG] Get Answer');
+        PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+      } else if (message.type === "candidate" && isStarted) {
+        let candidate = new RTCIceCandidate(
+          {
+            sdpMLineIndex: message.label,
+            candidate: message.candidate
+          });
+        PeerConnection!.addIceCandidate(candidate);
+      } else if (message == "bye" && isStarted) {
+        handleRemoteHangup();
+      }
     });
     
     socket.on('full', function(room) {
@@ -106,6 +127,26 @@
     });
   });
 
+  function handleRemoteHangup()
+  {
+    console.log('Session terminated.');
+    stop();
+    isInitiator = false;
+  }
+
+  function doAnswer()
+  {
+    console.log('Sending answer to peer.');
+    PeerConnection!.createAnswer().then(
+      setLocalAndSendMessage,
+      onCreateSessionDescriptionError
+    );
+  }
+
+  function onCreateSessionDescriptionError(error: Error) {
+   trace('Failed to create session description: ' + error.toString());
+  }
+
   function joinRoom()
   {
     socket.emit("create or join", roomValue);
@@ -120,11 +161,13 @@
     if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
       console.log('>>>>>> creating peer connection');
       createPeerConnection();
-      PeerConnection.addTrack(videoTrack);
+      PeerConnection!.addTrack(videoTrack);
+      console.log(remoteStream);
       isStarted = true;
       console.log('isInitiator', isInitiator);
+    // 自分がホスト(かける側)の場合
     if (isInitiator) {
-      // doCall();
+      doCall();
     }
     }
   }
@@ -142,9 +185,46 @@
     }
   }
 
-  function handleIceCandidate()
+  function handleIceCandidate(event: RTCPeerConnectionIceEvent)
   {
+    console.log('icecandidate event: ', event);
+    if (event.candidate) {
+      // よくわからない
+      sendMessage({
+        type: 'candidate',
+        label: event.candidate.sdpMLineIndex,
+        id: event.candidate.sdpMid,
+        candidate: event.candidate.candidate
+      });
+  } else {
+    console.log('End of candidates.');
+  }
+  }
 
+  function stop() {
+    isStarted = false;
+    PeerConnection!.close();
+    PeerConnection = null;
+  }
+
+  function doCall()
+  {
+    console.log("[CLIENT LOG] Sending offer to peer");
+    PeerConnection!.createOffer()
+      .then(setLocalAndSendMessage)
+      .catch(handleCreateOfferError);
+  }
+
+  function setLocalAndSendMessage(sessionDescription: RTCSessionDescriptionInit)
+  {
+    PeerConnection!.setLocalDescription(sessionDescription);
+    console.log('setLocalAndSendMessage sending message', sessionDescription);
+    sendMessage(sessionDescription);
+  }
+
+  function handleCreateOfferError(event: Error)
+  {
+    console.log('createOffer() error: ', event);
   }
 
   function handleTrackEnvet(event: RTCTrackEvent)
@@ -154,7 +234,7 @@
     {
       remoteStream = event.streams[0];
     } else {
-      if (remoteStream)
+      if (!remoteStream)
       {
         remoteStream = new MediaStream();
       }
@@ -184,7 +264,7 @@
     }
   }
 
-  function sendMessage(message: string)
+  function sendMessage(message: any)
   {
     console.log('Client sending message: ', message);
     socket.emit('message', message);
@@ -286,7 +366,7 @@
 
   function hangupAction()
   {
-
+    doCall();
   }
 
   function trace(text: String) {
