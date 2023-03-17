@@ -1,5 +1,5 @@
 <script lang="ts">
-  import "../app.css"
+  
   import { onMount } from 'svelte';
 
   // global 
@@ -33,19 +33,18 @@
   onMount(() => {
     trace("trece on: ");
     // DOMの取得
-    callButton = document.getElementById('callButton') as HTMLButtonElement;
-    startButton = document.getElementById('startButton') as HTMLButtonElement;
-    stopButton = document.getElementById('stopButton') as HTMLButtonElement;
-    hangupButton = document.getElementById('hangupButton') as HTMLButtonElement;
+      callButton = document.getElementById('callButton') as HTMLButtonElement;
+      startButton = document.getElementById('startButton') as HTMLButtonElement;
+      stopButton = document.getElementById('stopButton') as HTMLButtonElement;
+      hangupButton = document.getElementById('hangupButton') as HTMLButtonElement;
 
-    // 初期状態の設定
-    stopButton.disabled = true;
-    callButton.disabled = true;
-    hangupButton.disabled = true;
+      // 初期状態の設定
+      stopButton.disabled = true;
+      callButton.disabled = true;
+      hangupButton.disabled = true;
 
-
-    localVideo =  document.getElementById("localVideo") as HTMLVideoElement;
-    remoteVideo =  document.getElementById("remoteVideo") as HTMLVideoElement;
+      localVideo =  document.getElementById("localVideo") as HTMLVideoElement;
+      remoteVideo =  document.getElementById("remoteVideo") as HTMLVideoElement;
     
   });
 
@@ -320,10 +319,10 @@
 </div>
 
 <div>
-  <button id="startButton" class="btn" on:click={startAction}>Start</button>  
-  <button id="stopButton" class="btn" on:click={stopAction}>Stop</button>  
-  <button id="callButton" class="btn" on:click={callAction}>Call</button>  
-  <button id="hangupButton" class="btn" on:click={hangupAction}>Hang Up</button>  
+  <button id="startButton" class="btns" on:click={startAction}>Start</button>  
+  <button id="stopButton" class="btns" on:click={stopAction}>Stop</button>  
+  <button id="callButton" class="btns" on:click={callAction}>Call</button>  
+  <button id="hangupButton" class="btns" on:click={hangupAction}>Hang Up</button>  
 </div>
 
 
