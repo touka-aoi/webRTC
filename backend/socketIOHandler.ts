@@ -16,9 +16,9 @@ export default function injectSocketIO(server: httpServer)
     }
 
     // チャットメッセージ受信
-    socket.on("chatMessage", (message) => {
-      log("Client said:", message);
-      io.to(message.room).emit("chatMessage", message.message);
+    socket.on("chatMessage", (message, room) => {
+      log("Client said:", message, "in", room);
+      io.to(room).emit("chatMessage", message);
       console.log(message);
     });
 

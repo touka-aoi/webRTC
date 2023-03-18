@@ -64,61 +64,67 @@
 
     // webSocket Setting
 
-    // メッセージを受信した場合
+    // メッセージを受信した場合、チャットリストに追加する
     socket.on("chatMessage", (message) => {
-      console.log(message);
       messageAddul(message);
     });
 
     // システムメッセ―ジを受信する
     socket.on("message", (message) => {
-      console.log('["CLIENT LOG] Client received message:', message);
-      if (message === "got user media")
-      {
-        maybeStart();
-      } else if (message.type === "offer") {
-        console.log('["CLIENT LOG] Get Offer');
+      DebugLog('Client received message: ' + message);
+      // WebRTC-Offerを受けた時
+      if (message.type === "offer") {
+        DebugLog("Recive offer");
         // ホストでない かつ 通信を行っていない
         if (!isInitiator && !isStarted)
         {
-          console.log("[ANOTHER PEER LOG] Create peer connection");
+          DebugLog("Create WebRTCPeerConnection");
           // Trackの準備を行う
           maybeStart();
         }
         PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+        DebugLog("Set Remote Description");
         doAnswer();
-      } else if (message.type === 'answer' && isStarted) {
-        console.log('["CLIENT LOG] Get Answer');
+        DebugLog("Send Answer");
+      } 
+      // WebRTC-Answerを受け取った時
+      else if (message.type === 'answer' && isStarted) {
+        DebugLog("Receive answer");
         PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
-      } else if (message.type === "candidate" && isStarted) {
+        DebugLog("Set remote description");
+      } 
+      // IceCandidateを受け取った時
+      else if (message.type === "candidate" && isStarted) {
+        DebugLog("Get IceCandidate");
         let candidate = new RTCIceCandidate(
           {
             sdpMLineIndex: message.label,
             candidate: message.candidate
           });
         PeerConnection!.addIceCandidate(candidate);
-      } else if (message == "bye" && isStarted) {
+      } 
+      // terminated
+      else if (message == "bye" && isStarted) {
         handleRemoteHangup();
       }
     });
     
     socket.on('full', function(room) {
-      console.log('Room ' + room + ' is full');
+      DebugLog('Room ' + room + ' is full');
     });
 
     socket.on('created', function(room) {
-      console.log('Created room ' + room);
-      isInitiator = true;
+      DebugLog('Created room ' + room);
     });
 
     socket.on('joined', function(room) {
-      console.log('joined: ' + room);
+      DebugLog('joined: ' + room);
       isChannelReady = true;
     });
 
     socket.on('join', function (room){
-      console.log('Another peer made a request to join room ' + room);
-      console.log('This peer is the initiator of room ' + room + '!');
+      DebugLog('Another peer made a request to join room ' + room);
+      DebugLog('This peer is the initiator of room ' + room + '!');
       isChannelReady = true;
     });
 
@@ -154,6 +160,7 @@
     room = roomValue;
   }
 
+  // 準備が整っていたら、WebRTC通信を始める.
   function maybeStart()
   {
     console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
@@ -162,13 +169,12 @@
       console.log('>>>>>> creating peer connection');
       createPeerConnection();
       PeerConnection!.addTrack(videoTrack);
-      console.log(remoteStream);
       isStarted = true;
       console.log('isInitiator', isInitiator);
-    // 自分がホスト(かける側)の場合
-    if (isInitiator) {
-      doCall();
-    }
+      // 自分がホスト(かける側)の場合
+      if (isInitiator) {
+        doCall();
+      }
     }
   }
 
@@ -209,7 +215,6 @@
 
   function doCall()
   {
-    console.log("[CLIENT LOG] Sending offer to peer");
     PeerConnection!.createOffer()
       .then(setLocalAndSendMessage)
       .catch(handleCreateOfferError);
@@ -282,12 +287,8 @@
   // クライアントにメッセージを送信
   function sendChatMessage() {
     console.log("button Click");
-    const chatMessage = {
-      "message" : chatValue,
-      "room": room,
-    }
-    if(!chatMessage) return
-    socket.emit("chatMessage", chatMessage) // Send the message
+    if(!chatValue) return
+    socket.emit("chatMessage", chatValue, room) // Send the message
   }
 
   function startAction()
@@ -308,6 +309,8 @@
       'https://computeengineondemand.appspot.com/turn?username=41784574&key=4080218913'
       );
     }
+    isInitiator = true;
+    maybeStart();
   }
 
   function requestTurn(turnURI: string)
@@ -366,7 +369,6 @@
 
   function hangupAction()
   {
-    doCall();
   }
 
   function trace(text: String) {
@@ -374,6 +376,11 @@
     const now = (window.performance.now() / 1000).toFixed(3);
 
     console.log(now, text);
+  }
+
+  function DebugLog(text: string) {
+    text = text.trim();
+    console.log("[CLIENT LOG: " + text + "]");
   }
 
 </script>
@@ -420,4 +427,5 @@
   </div>  
 <form id="form" action="" class="bg-slate-400 p-2 rounded flex gap-2">
   <input id="input" autocomplete="off" bind:value={roomValue} class ="rounded-full px-3"/><button on:click={joinRoom} class = "text-white">Join Room</button>
+  <p>{roomValue ? roomValue : ""}</p>
 </form>

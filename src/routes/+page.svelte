@@ -319,10 +319,10 @@
 </div>
 
 <div>
-  <button id="startButton" class="btns" on:click={startAction}>Start</button>  
-  <button id="stopButton" class="btns" on:click={stopAction}>Stop</button>  
-  <button id="callButton" class="btns" on:click={callAction}>Call</button>  
-  <button id="hangupButton" class="btns" on:click={hangupAction}>Hang Up</button>  
+  <button id="startButton" class="btn" on:click={startAction}>Start</button>  
+  <button id="stopButton" class="btn" on:click={stopAction}>Stop</button>  
+  <button id="callButton" class="btn" on:click={callAction}>Call</button>  
+  <button id="hangupButton" class="btn" on:click={hangupAction}>Hang Up</button>  
 </div>
 
 
