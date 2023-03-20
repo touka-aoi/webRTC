@@ -34,8 +34,9 @@
   let videoTrack: MediaStreamTrack;
   let remotevideoTrack: MediaStreamTrack;
 
+  // 取得するメディア
   const mediaStreamConstraints = { 
-    video: true,
+   video: true,
   };
 
   $: videoWidth = 0;
@@ -62,75 +63,83 @@
     remoteVideo =  document.getElementById("remoteVideo") as HTMLVideoElement;
     messageList = document.getElementById('messages');
 
-    // webSocket Setting
 
-    // メッセージを受信した場合、チャットリストに追加する
-    socket.on("chatMessage", (message) => {
-      messageAddul(message);
-    });
+    // 接続後関数を使用させる
+    socket.on("connect", ()=> {
 
-    // システムメッセ―ジを受信する
-    socket.on("message", (message) => {
-      DebugLog('Client received message: ' + message);
-      // WebRTC-Offerを受けた時
-      if (message.type === "offer") {
-        DebugLog("Recive offer");
-        // ホストでない かつ 通信を行っていない
-        if (!isInitiator && !isStarted)
-        {
-          DebugLog("Create WebRTCPeerConnection");
-          // Trackの準備を行う
-          maybeStart();
-        }
-        PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
-        DebugLog("Set Remote Description");
-        doAnswer();
-        DebugLog("Send Answer");
-      } 
-      // WebRTC-Answerを受け取った時
-      else if (message.type === 'answer' && isStarted) {
-        DebugLog("Receive answer");
-        PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
-        DebugLog("Set remote description");
-      } 
-      // IceCandidateを受け取った時
-      else if (message.type === "candidate" && isStarted) {
-        DebugLog("Get IceCandidate");
-        let candidate = new RTCIceCandidate(
+      // メッセージを受信した場合、チャットリストに追加する
+      socket.on("chatMessage", (message) => {
+        messageAddul(message);
+      });
+
+      // システムメッセ―ジを受信する
+      socket.on("message", (message) => {
+        // DebugLog('Client received message: ' + message);
+        messageAddul(message);
+        // WebRTC-Offerを受けた時
+        if (message.type === "offer") {
+          // DebugLog("Recive offer");
+          // ホストでない かつ 通信を行っていない
+          if (!isInitiator && !isStarted)
           {
-            sdpMLineIndex: message.label,
-            candidate: message.candidate
-          });
-        PeerConnection!.addIceCandidate(candidate);
-      } 
-      // terminated
-      else if (message == "bye" && isStarted) {
-        handleRemoteHangup();
-      }
-    });
-    
-    socket.on('full', function(room) {
-      DebugLog('Room ' + room + ' is full');
-    });
+            // DebugLog("Create WebRTCPeerConnection");
+            // Trackの準備を行う
+            maybeStart();
+          }
+          PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+          // DebugLog("Set Remote Description");
+          doAnswer();
+          // DebugLog("Send Answer");
+        } 
+        // WebRTC-Answerを受け取った時
+        else if (message.type === 'answer' && isStarted) {
+          // DebugLog("Receive answer");
+          PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+          // DebugLog("Set remote description");
+        } 
+        // IceCandidateを受け取った時
+        else if (message.type === "candidate" && isStarted) {
+          // DebugLog("Get IceCandidate");
+          let candidate = new RTCIceCandidate(
+            {
+              sdpMLineIndex: message.label,
+              candidate: message.candidate
+            });
+          PeerConnection!.addIceCandidate(candidate);
+        } 
+        // terminated
+        else if (message == "bye" && isStarted) {
+          handleRemoteHangup();
+        }
+      });
+      
+      socket.on('full', function(room) {
+        // DebugLog('Room ' + room + ' is full');
+      });
 
-    socket.on('created', function(room) {
-      DebugLog('Created room ' + room);
-    });
+      socket.on('created', function(room) {
+        // DebugLog('Created room ' + room);
+      });
 
-    socket.on('joined', function(room) {
-      DebugLog('joined: ' + room);
-      isChannelReady = true;
-    });
+      // ルームに人が入れば isReadyになる
+      socket.on('joined', function(room) {
+        // DebugLog('joined: ' + room);
+        isChannelReady = true;
+      });
 
-    socket.on('join', function (room){
-      DebugLog('Another peer made a request to join room ' + room);
-      DebugLog('This peer is the initiator of room ' + room + '!');
-      isChannelReady = true;
-    });
+      // ルームに人が入れば isReadyになる
+      socket.on('join', function (room){
+        // DebugLog('Another peer made a request to join room ' + room);
+        // DebugLog('This peer is the initiator of room ' + room + '!');
+        isChannelReady = true;
+      });
 
-    socket.on('log', function(array) {
-      console.log.apply(console, array);
-    });
+      socket.on('log', function(array) {
+        console.log.apply(console, array);
+      });
+  });
+
+  
   });
 
   function handleRemoteHangup()
@@ -142,7 +151,7 @@
 
   function doAnswer()
   {
-    console.log('Sending answer to peer.');
+    // console.log('Sending answer to peer.');
     PeerConnection!.createAnswer().then(
       setLocalAndSendMessage,
       onCreateSessionDescriptionError
@@ -150,27 +159,27 @@
   }
 
   function onCreateSessionDescriptionError(error: Error) {
-   trace('Failed to create session description: ' + error.toString());
+  //  trace('Failed to create session description: ' + error.toString());
   }
 
   function joinRoom()
   {
     socket.emit("create or join", roomValue);
-    console.log("created or join room: " + roomValue);
+    // console.log("created or join room: " + roomValue);
     room = roomValue;
   }
 
   // 準備が整っていたら、WebRTC通信を始める.
   function maybeStart()
   {
-    console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
+    console.log('>>>>>>> maybeStart() ', "isStarted: ", isStarted, "localStream :", localStream, "isChannelReady: ",  isChannelReady);
     // roomに入っている + Mediaを確保している + 開始されていない場合 RTCPeerConnectionを作成する
     if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
       console.log('>>>>>> creating peer connection');
       createPeerConnection();
       PeerConnection!.addTrack(videoTrack);
       isStarted = true;
-      console.log('isInitiator', isInitiator);
+      // console.log('isInitiator', isInitiator);
       // 自分がホスト(かける側)の場合
       if (isInitiator) {
         doCall();
@@ -279,7 +288,7 @@
   function getMediaTracksSetting(mediaTrack: MediaStreamTrack)
   {
     const currentSetting = mediaTrack.getSettings();
-    console.log(currentSetting);
+    // console.log(currentSetting);
     videoHeight = currentSetting.height as number;
     videoWidth = currentSetting.width as number;
   }
@@ -291,16 +300,17 @@
     socket.emit("chatMessage", chatValue, room) // Send the message
   }
 
+  // ビデオメディアの取得
   function startAction()
   {
     startButton.disabled = true;
     stopButton.disabled = false;
     navigator.mediaDevices.getUserMedia(mediaStreamConstraints)
       .then(gotLocalMediaStream).catch((e:Error) => {"getUserMedia() error" + e.name});
-    trace('Requesting local stream.');
+    // trace('Requesting local stream.');
   }
 
-  
+  // コールアクション
   function callAction()
   {
     // 外部ネットワークからアクセスしたとき
@@ -361,8 +371,9 @@
     startButton.disabled = false;
     stopButton.disabled = true;
     callButton.disabled = true;
-    videoTrack.stop(); // ビデオの停止
-    localStream.removeTrack(videoTrack); // リソースの解放
+    if (videoTrack)
+      videoTrack.stop(); // ビデオの停止
+      localStream.removeTrack(videoTrack); // リソースの解放
     if (localVideo)
       localVideo.srcObject = null;
   }

@@ -11,7 +11,8 @@ export default function injectSocketIO(server: httpServer)
     function log(...args: Array<string>) {
       var array = ["[SERVER LOG] Message from server:"];
       array.push.apply(array, Array.prototype.slice.call(arguments));
-      socket.emit("log", array);
+      // 自分自身にだけ送り返したい
+      //socket.emit("log", array);
       console.log(...array);
     }
 
@@ -23,30 +24,39 @@ export default function injectSocketIO(server: httpServer)
     });
 
     // システムメッセージ受信
-    socket.on("message", (message) => {
-      console.log(message);
-      io.emit("message", message);
+    socket.on("message", (message, room) => {
+      if (room) {
+        console.log(message, room);
+        socket.to(room).emit("message", message, room);
+      } else 
+      {
+        io.emit("message", message);
+      }
     });
 
     // room作成
     socket.on("create or join", (room) => {
       // log 
       log("Received request to create or join: " + room);
-      // room処理
+      // roomの確認
       const clientsInRoom = io.sockets.adapter.rooms.get(room);
-      const numROoms = clientsInRoom ? clientsInRoom.size : 0;
+      // roomの人数を確認
+      const inRoomNums = clientsInRoom ? clientsInRoom.size : 0;
       // room info
-      log('Room ' + room + ' now has ' + numROoms + ' client(s)');
+      log('Room ' + room + ' now has ' + inRoomNums + ' client(s)');
 
-      // room数をチェックしない場合は作成、ある場合はjoinする
-      if (numROoms === 0) {
+      // roomに人がいない or roomがない場合
+      if (inRoomNums === 0) {
         socket.join(room);
         log('Client ID ' + socket.id + ' created room ' + room);
-        socket.emit('created', room, socket.id);
-      } else if (numROoms == 1) {
+        // 全体通知
+        io.emit('created', room, socket.id);
+      } else if (inRoomNums == 1) {
         log('Client ID ' + socket.id + ' joined room ' + room);
-        io.sockets.in(room).emit('join', room);
         socket.join(room);
+        // 全体通知
+        io.sockets.in(room).emit('join', room, socket.id);
+        // 個別通知
         socket.emit('joined', room, socket.id);
         io.sockets.in(room).emit('ready');
       } else { // max two clients
