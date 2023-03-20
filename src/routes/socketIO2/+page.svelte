@@ -232,6 +232,7 @@
     if (videoTrack)
       videoTrack.stop(); // ビデオの停止
       localStream.removeTrack(videoTrack); // リソースの解放
+      doCall();
     if (localVideo)
       localVideo.srcObject = null;
     // ボタンの初期化
