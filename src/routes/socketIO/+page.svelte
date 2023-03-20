@@ -63,6 +63,7 @@
     remoteVideo =  document.getElementById("remoteVideo") as HTMLVideoElement;
     messageList = document.getElementById('messages');
 
+<<<<<<< Updated upstream
 
     // 接続後関数を使用させる
     socket.on("connect", ()=> {
@@ -81,6 +82,45 @@
           // DebugLog("Recive offer");
           // ホストでない かつ 通信を行っていない
           if (!isInitiator && !isStarted)
+=======
+    // webSocket Setting
+
+    // メッセージを受信した場合、チャットリストに追加する
+    socket.on("chatMessage", (message) => {
+      messageAddul(message);
+    });
+
+    // システムメッセ―ジを受信する
+    socket.on("message", (message) => {
+      DebugLog('Client received message: ' + message);
+      // WebRTC-Offerを受けた時
+      if (message.type === "offer") {
+        DebugLog("Recive offer");
+        // ホストでない かつ 通信を行っていない
+        if (!isInitiator && !isStarted)
+        {
+          DebugLog("Create WebRTCPeerConnection");
+          // Trackの準備を行う
+          maybeStart();
+        }
+        console.log("=---------");
+        console.log(message);
+        PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+        DebugLog("Set Remote Description");
+        doAnswer();
+        DebugLog("Send Answer");
+      } 
+      // WebRTC-Answerを受け取った時
+      else if (message.type === 'answer' && isStarted) {
+        DebugLog("Receive answer");
+        PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
+        DebugLog("Set remote description");
+      } 
+      // IceCandidateを受け取った時
+      else if (message.type === "candidate" && isStarted) {
+        DebugLog("Get IceCandidate");
+        let candidate = new RTCIceCandidate(
+>>>>>>> Stashed changes
           {
             // DebugLog("Create WebRTCPeerConnection");
             // Trackの準備を行う
