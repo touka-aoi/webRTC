@@ -380,6 +380,7 @@
 
   function hangupAction()
   {
+    
   }
 
   function trace(text: String) {
