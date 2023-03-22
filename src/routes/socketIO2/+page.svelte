@@ -34,8 +34,11 @@
   let isChannelReady = false;
   let isStarted = false;
   let isInitiator = false;
+  let sender: RTCRtpSender;
 
   onMount(() => {
+    // setEvent
+    
     // get DOM element
     callButton = document.getElementById('callButton') as HTMLButtonElement;
     startButton = document.getElementById('startButton') as HTMLButtonElement;
@@ -50,6 +53,13 @@
     localVideo =  document.getElementById("localVideo") as HTMLVideoElement;
     remoteVideo =  document.getElementById("remoteVideo") as HTMLVideoElement;
     messageList = document.getElementById('messages');
+
+
+    socket.on("chatMessage", (message: string) => {
+      let li = document.createElement("li");
+      li.appendChild(document.createTextNode(message));
+      messageList.appendChild(li);
+    });
 
     socket.on('created', function(room, socketID) {
       console.log("[LOG]: Created room: ", room,  " from ", socketID );
@@ -84,7 +94,7 @@
         } 
         // WebRTC-Answerを受け取った時
         else if (message.type === 'answer' && isStarted) {
-          console.log(message, room);
+          // console.log(message, room);
           PeerConnection!.setRemoteDescription(new RTCSessionDescription(message));
           // DebugLog("Set remote description");
         } 
@@ -122,10 +132,10 @@
     if (true) {
       console.log('>>>>>> creating peer connection');
       createPeerConnection();
-      PeerConnection!.addTrack(videoTrack);
+      sender = PeerConnection!.addTrack(videoTrack);
       isStarted = true;
       // 自分がホスト(かける側)の場合
-      if (isInitiator) {
+      if (false) {
         doCall();
       }
     }
@@ -151,6 +161,7 @@
       PeerConnection = new RTCPeerConnection(undefined);
       PeerConnection.onicecandidate = handleIceCandidate;
       PeerConnection.ontrack = handleTrackEnvet;
+      PeerConnection.onnegotiationneeded = handleNegotiation;
     } catch (e: any) {
       console.log('Failed to create PeerConnection, exception: ' + e.message);
       alert('Cannot create RTCPeerConnection object.');
@@ -160,7 +171,7 @@
 
   function handleIceCandidate(event: RTCPeerConnectionIceEvent)
   {
-    console.log('Get icecandidate event: ', event);
+    // console.log('Get icecandidate event: ', event);
     if (event.candidate) {
       // よくわからない
       sendMessage({
@@ -174,6 +185,14 @@
     }
   }
 
+  function handleNegotiation()
+  {
+    console.log("Re egotiation start");
+    PeerConnection!.createOffer()
+      .then(setLocalAndSendMessage)
+      .catch((event) => {console.log('createOffer() error: ', event);});
+  }
+
   function sendMessage(message: any)
   {
     socket.emit('message', message, room);
@@ -183,22 +202,16 @@
   {
     console.log("handle Track Event");
     remotevideoTrack = event.track as MediaStreamTrack;
-    // ストリームを確認
-    if (event.streams && event.streams[0])
-    {
-      remoteStream = event.streams[0];
-    } 
-    else 
-    {
-      // ストリームが存在しない場合
-      if (!remoteStream)
-      {
-        remoteStream = new MediaStream();
-      }
-    }
-    // リモートの受け取り準備
-    remoteVideo.srcObject = remoteStream;
+    remotevideoTrack.onmute = () => {
+      remotevideoTrack.stop();
+      remoteStream.removeTrack(remotevideoTrack);
+      remoteVideo.srcObject = null;
+
+    };
+    // // リモートの受け取り準備
+    remoteStream = new MediaStream();
     remoteStream.addTrack(remotevideoTrack);
+    remoteVideo.srcObject = remoteStream;
     // リモートの受け取り準備完了
   }
 
@@ -207,6 +220,7 @@
     stopButton.disabled = false;
     navigator.mediaDevices.getUserMedia(mediaStreamConstraints)
       .then(gotLocalMediaStream).catch((e:Error) => {"getUserMedia() error" + e.name});
+   
   }
 
   function gotLocalMediaStream(mediaStream: MediaStream)
@@ -217,6 +231,11 @@
     videoTrack = localStream.getVideoTracks()[0];
     getMediaTracksSetting(videoTrack);
     callButton.disabled = false;
+    if (PeerConnection)
+    {
+      console.log(videoTrack);
+      sender = PeerConnection.addTrack(videoTrack);
+    }
   }
 
   // mediaStreamの設定を取得する
@@ -230,15 +249,14 @@
   function stopAction() {
     // ローカル接続の解除
     if (videoTrack)
+    {
       videoTrack.stop(); // ビデオの停止
       localStream.removeTrack(videoTrack); // リソースの解放
-      doCall();
-    if (localVideo)
-      localVideo.srcObject = null;
-    // ボタンの初期化
-    if (hangupButton.disabled === true) {
-      startButton.disabled = false;
+      PeerConnection?.removeTrack(sender);
     }
+    localVideo.srcObject = null;
+    // ボタンの初期化
+    startButton.disabled = false;
     stopButton.disabled = true;
     callButton.disabled = true; 
     videoWidth = 0;
@@ -266,8 +284,9 @@
 
   function sendChatMessage() {
     // socket.emit("message", "test1", "");
-    isInitiator = true;
-    maybeStart()
+    // isInitiator = true;
+    // maybeStart()
+    socket.emit("chatMessage", chatValue, room);
   }
 
   function joinRoom() {
