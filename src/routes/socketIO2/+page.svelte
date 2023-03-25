@@ -139,7 +139,6 @@
         doCall();
       }
     }
-    isInitiator = false;
   }
 
   function doCall()
@@ -200,7 +199,6 @@
 
   function handleTrackEnvet(event: RTCTrackEvent)
   {
-    console.log("handle Track Event");
     remotevideoTrack = event.track as MediaStreamTrack;
     remotevideoTrack.onmute = () => {
       remotevideoTrack.stop();
@@ -258,29 +256,11 @@
     // ボタンの初期化
     startButton.disabled = false;
     stopButton.disabled = true;
-    callButton.disabled = true; 
-    videoWidth = 0;
-    videoHeight = 0;
-
-  }
-  function callAction() {
-    isInitiator = true;
-    maybeStart();
-    hangupButton.disabled = false;
     callButton.disabled = true;
-  }
-  
-  function hangupAction() {
-    PeerConnection!.close();
-    hangupButton.disabled = true;
-    callButton.disabled = false;
-    if (stopButton.disabled == true && startButton.disabled == true)  
-    {
-      startButton.disabled = false;
-      callButton.disabled = true;
-    }
 
   }
+  function callAction() {}
+  function hangupAction() {}
 
   function sendChatMessage() {
     // socket.emit("message", "test1", "");
